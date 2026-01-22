@@ -1,0 +1,9 @@
+# Python test data generator dependencies
+# Install with: pip install -r requirements.txt
+
+# No external dependencies required - uses only Python stdlib
+# dataclasses (built-in Python 3.7+)
+# struct (built-in)
+# random (built-in)
+# json (built-in)
+# argparse (built-in)
