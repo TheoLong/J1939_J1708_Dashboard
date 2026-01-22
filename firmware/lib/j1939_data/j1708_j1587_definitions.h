@@ -50,13 +50,13 @@ typedef enum {
     
     // Brakes
     MID_BRAKES_POWER_TRAIN          = 131,  // 0x83 - Brakes - Power Train
-    MID_BRAKES_TRAILER_1            = 136,  // 0x88 - Brakes - Trailer #1
-    MID_BRAKES_TRAILER_2            = 137,  // 0x89 - Brakes - Trailer #2
-    MID_BRAKES_TRACTOR              = 172,  // 0xAC - Brakes - Tractor (ABS)
+    MID_BRAKES_TRAILER_1            = 136,  // 0x88 - Brakes - Trailer #1 (ABS)
+    MID_BRAKES_TRAILER_2            = 137,  // 0x89 - Brakes - Trailer #2 (ABS)
+    MID_BRAKES_ABS_TRACTOR          = 172,  // 0xAC - Antilock Brakes - Tractor (Bendix EC-60, WABCO)
     
     // Instruments and Body
     MID_INSTRUMENT_CLUSTER          = 140,  // 0x8C - Instrument Cluster
-    MID_VEHICLE_MANAGEMENT          = 142,  // 0x8E - Vehicle Management System
+    MID_VEHICLE_MANAGEMENT          = 142,  // 0x8E - Vehicle Management System (often includes ABS on tractors)
     MID_BODY_CONTROLLER             = 144,  // 0x90 - Body Controller
     MID_SUSPENSION                  = 145,  // 0x91 - Suspension
     
@@ -84,9 +84,9 @@ typedef enum {
     // Trip Recorder
     MID_TRIP_RECORDER               = 156,  // 0x9C - Trip Recorder
     
-    // Diagnostic Tools
-    MID_DIAG_TOOL_1                 = 172,  // 0xAC - Off-board Diagnostic Tool #1
-    MID_DIAG_TOOL_2                 = 173,  // 0xAD - Off-board Diagnostic Tool #2
+    // Diagnostic Tools (per SAE J1587)
+    MID_DIAG_TOOL_1                 = 249,  // 0xF9 - Off-board Diagnostic Tool #1
+    MID_DIAG_TOOL_2                 = 250,  // 0xFA - Off-board Diagnostic Tool #2
     
     // Tire Pressure
     MID_TIRE_PRESSURE               = 175,  // 0xAF - Tire Pressure Monitoring
@@ -128,9 +128,9 @@ typedef enum {
     PID_THROTTLE_POSITION           = 91,   // Throttle Position
     PID_ENGINE_HOURS                = 247,  // Engine Total Hours
     
-    // Transmission Parameters
-    PID_TRANS_OIL_TEMP              = 177,  // Transmission Oil Temperature
-    PID_TRANS_OIL_PRESSURE          = 178,  // Transmission Oil Pressure
+    // Transmission Parameters (Note: J1587 PIDs differ from J1939 SPNs)
+    PID_TRANS_OIL_TEMP              = 177,  // Transmission Oil Temperature (J1587 PID 177)
+    PID_TRANS_OIL_PRESSURE          = 178,  // Transmission Oil Pressure (J1587 PID 178)
     PID_TRANS_OIL_LEVEL             = 124,  // Transmission Oil Level
     PID_SELECTED_GEAR               = 162,  // Selected Gear
     PID_CURRENT_GEAR                = 163,  // Current/Attained Gear
@@ -309,15 +309,17 @@ static const j1587_pid_def_t j1587_pid_catalog[] = {
     { 91,   "Throttle Position",             "%",    1, 0.4f,    0.0f,    0.0f,    102.0f   },
     { 247,  "Engine Total Hours",            "hrs",  4, 0.05f,   0.0f,    0.0f,    214748364.75f },
     
-    // Transmission Parameters
-    { 177,  "Transmission Oil Temperature",  "°F",   1, 1.0f,    -40.0f,  -40.0f,  215.0f   },
+    // Transmission Parameters (J1587 PIDs)
+    { 177,  "Transmission Oil Temperature",  "°F",   1, 1.0f,    -40.0f,  -40.0f,  302.0f   },  // J1587 PID 177 (distinct from J1939 SPN 177)
+    { 178,  "Transmission Oil Pressure",     "psi",  1, 4.0f,    0.0f,    0.0f,    1020.0f  },  // J1587 PID 178 (distinct from J1939 SPN 178)
+    { 124,  "Transmission Oil Level",        "%",    1, 0.5f,    0.0f,    0.0f,    127.5f   },  // J1587 PID 124
     { 162,  "Selected Gear",                 "",     1, 1.0f,    -125.0f, -125.0f, 125.0f   },
     { 163,  "Current Gear",                  "",     1, 1.0f,    -125.0f, -125.0f, 125.0f   },
     { 191,  "Trans Output Shaft Speed",      "rpm",  2, 0.25f,   0.0f,    0.0f,    16383.75f},
     
     // Electrical
-    { 168,  "Battery Voltage",               "V",    1, 0.05f,   0.0f,    0.0f,    12.75f   },
-    { 167,  "Alternator Voltage",            "V",    1, 0.05f,   0.0f,    0.0f,    12.75f   },
+    { 168,  "Battery Voltage",               "V",    2, 0.05f,   0.0f,    0.0f,    3276.75f },  // 2 bytes, 0.05V/bit (J1587 uses 2-byte value)
+    { 167,  "Alternator Voltage",            "V",    2, 0.05f,   0.0f,    0.0f,    3276.75f },  // 2 bytes, 0.05V/bit
     
     // Brakes
     { 70,   "Parking Brake Status",          "",     1, 1.0f,    0.0f,    0.0f,    3.0f     },

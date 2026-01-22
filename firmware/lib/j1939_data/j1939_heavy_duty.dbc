@@ -71,14 +71,14 @@ BO_ 2364539904 EEC1: 8 Engine
  SG_ SourceAddressOfControllingDevice : 40|8@1+ (1,0) [0|255] "" DiagTool
  SG_ EngStarterMode : 48|4@1+ (1,0) [0|15] "" Instrument
 
-BO_ 2364540160 EEC2: 8 Engine
+BO_ 2364539648 EEC2: 8 Engine
  SG_ AccelPedalPos1 : 8|8@1+ (0.4,0) [0|102] "%" Instrument
  SG_ AccelPedalPos2 : 56|8@1+ (0.4,0) [0|102] "%" Instrument
  SG_ EngPercentLoadAtCurrentSpeed : 16|8@1+ (1,0) [0|100] "%" Instrument
  SG_ RemoteAccelPedalPosition : 24|8@1+ (0.4,0) [0|102] "%" Instrument
  SG_ ActualMaxAvailableEnginePercentTorque : 40|8@1+ (0.4,0) [0|102] "%" Instrument
 
-BO_ 2566841856 ET1: 8 Engine
+BO_ 2566843904 ET1: 8 Engine
  SG_ EngineCoolantTemperature : 0|8@1+ (1,-40) [-40|210] "degC" Instrument
  SG_ FuelTemperature1 : 8|8@1+ (1,-40) [-40|210] "degC" Instrument
  SG_ EngineOilTemperature1 : 16|16@1+ (0.03125,-273) [-273|1735] "degC" Instrument
@@ -86,7 +86,7 @@ BO_ 2566841856 ET1: 8 Engine
  SG_ EngineIntercoolerTemperature : 48|8@1+ (1,-40) [-40|210] "degC" Instrument
  SG_ EngineIntercoolerThermostatOpening : 56|8@1+ (0.4,0) [0|102] "%" Instrument
 
-BO_ 2566842112 EFLP1: 8 Engine
+BO_ 2566844160 EFLP1: 8 Engine
  SG_ EngineOilPressure : 24|8@1+ (4,0) [0|1000] "kPa" Instrument
  SG_ EngineCoolantPressure : 32|8@1+ (2,0) [0|500] "kPa" Instrument
  SG_ EngineFuelDeliveryPressure : 8|8@1+ (4,0) [0|1000] "kPa" Instrument
@@ -103,27 +103,31 @@ BO_ 2566844672 CCVS: 8 Engine
  SG_ CruiseControlSetSpeed : 40|8@1+ (1,0) [0|250] "km/h" Instrument
  SG_ PTOSetSpeed : 48|8@1+ (1,0) [0|255] "rpm" Instrument
 
-BO_ 2566847232 IC1: 8 Engine
- SG_ EngineAirInletPressure : 0|8@1+ (2,0) [0|500] "kPa" Instrument
+BO_ 2566845952 IC1: 8 Engine
+ SG_ ParticulateTrapInletPressure : 0|8@1+ (0.5,0) [0|125] "kPa" Instrument
  SG_ BoostPressure : 8|8@1+ (2,0) [0|500] "kPa" Instrument
  SG_ EngineIntakeManifoldTemp : 16|8@1+ (1,-40) [-40|210] "degC" Instrument
- SG_ AirInletTemp : 24|8@1+ (1,-40) [-40|210] "degC" Instrument
+ SG_ AirInletPressure : 24|8@1+ (2,0) [0|500] "kPa" Instrument
  SG_ AirFilterDifferentialPressure : 32|8@1+ (0.05,0) [0|12.5] "kPa" Instrument
  SG_ ExhaustGasTemperature : 40|16@1+ (0.03125,-273) [-273|1735] "degC" Instrument
+ SG_ CoolantFilterDiffPressure : 56|8@1+ (0.5,0) [0|125] "kPa" Instrument
 
-BO_ 2566847488 VEP1: 8 Engine
- SG_ BatteryPotential : 16|16@1+ (0.05,0) [0|3212.75] "V" Instrument
- SG_ AlternatorCurrent : 40|8@1+ (1,0) [0|250] "A" Instrument
- SG_ ChargingSystemPotential : 48|16@1+ (0.05,0) [0|3212.75] "V" Instrument
+BO_ 2566846208 VEP1: 8 Engine
+ SG_ NetBatteryCurrent : 0|16@1+ (1,-125) [-125|125] "A" Instrument
+ SG_ AlternatorCurrent : 16|16@1+ (1,0) [0|250] "A" Instrument
+ SG_ ChargingSystemPotential : 32|16@1+ (0.05,0) [0|3212.75] "V" Instrument
+ SG_ BatteryPotential : 48|16@1+ (0.05,0) [0|3212.75] "V" Instrument
 
-BO_ 2566847744 TRF1: 8 Transmission
- SG_ TransOilLevel1 : 0|8@1+ (0.4,0) [0|100] "%" Instrument
- SG_ TransOilFilterDifferentialPressure : 8|8@1+ (0.5,0) [0|125] "kPa" Instrument
- SG_ TransOilPressure : 16|8@1+ (4,0) [0|1000] "kPa" Instrument
- SG_ TransOilTemperature1 : 24|16@1+ (0.03125,-273) [-273|1735] "degC" Instrument
- SG_ TransReverseGearPressure : 40|8@1+ (16,0) [0|4000] "kPa" Instrument
+BO_ 2566846464 TRF1: 8 Transmission
+ SG_ TransClutchPressure : 0|8@1+ (16,0) [0|4000] "kPa" Instrument
+ SG_ TransOilLevel1 : 8|8@1+ (0.4,0) [0|100] "%" Instrument
+ SG_ TransOilFilterDifferentialPressure : 16|8@1+ (2,0) [0|500] "kPa" Instrument
+ SG_ TransOilPressure : 24|8@1+ (16,0) [0|4000] "kPa" Instrument
+ SG_ TransOilTemperature1 : 32|16@1+ (0.03125,-273) [-273|1735] "degC" Instrument
+ SG_ TransOilLevelHighLow : 48|8@1+ (0.4,-50) [-50|51.2] "%" Instrument
+ SG_ TransOilLevelCountdownTimer : 56|8@1+ (1,0) [0|250] "s" Instrument
 
-BO_ 2364540672 ETC1: 8 Transmission
+BO_ 2364539392 ETC1: 8 Transmission
  SG_ InputShaftSpeed : 0|16@1+ (0.125,0) [0|8031.875] "rpm" Instrument
  SG_ OutputShaftSpeed : 16|16@1+ (0.125,0) [0|8031.875] "rpm" Instrument
  SG_ PercentClutchSlip : 32|8@1+ (0.4,0) [0|100] "%" Instrument
@@ -132,42 +136,43 @@ BO_ 2364540672 ETC1: 8 Transmission
  SG_ EngDeratingEnable : 46|2@1+ (1,0) [0|3] "" Instrument
  SG_ SourceAddressOfTorqueLimiting : 48|8@1+ (1,0) [0|255] "" DiagTool
 
-BO_ 2364540928 ETC2: 8 Transmission
+BO_ 2364540160 ETC2: 8 Transmission
  SG_ SelectedGear : 0|8@1+ (1,-125) [-125|125] "" Instrument
  SG_ ActualGearRatio : 8|16@1+ (0.001,0) [0|64.255] "" Instrument
  SG_ CurrentGear : 24|8@1+ (1,-125) [-125|125] "" Instrument
  SG_ TransRequestedRange : 32|16@1+ (1,0) [0|65535] "" Transmission
  SG_ TransCurrentRange : 48|16@1+ (1,0) [0|65535] "" Instrument
 
-BO_ 2566843648 LFE: 8 Engine
+BO_ 2566844928 LFE: 8 Engine
  SG_ EngineFuelRate : 0|16@1+ (0.05,0) [0|3212.75] "L/h" Instrument
- SG_ EngineFuelRateInstantaneous : 16|16@1+ (0.05,0) [0|3212.75] "L/h" Instrument
- SG_ EngineThrottleValvePos1 : 32|8@1+ (0.4,0) [0|102] "%" Instrument
- SG_ EngineThrottleValvePos2 : 40|8@1+ (0.4,0) [0|102] "%" Instrument
+ SG_ InstantaneousFuelEconomy : 16|16@1+ (0.001953125,0) [0|125.5] "km/L" Instrument
+ SG_ AverageFuelEconomy : 32|16@1+ (0.001953125,0) [0|125.5] "km/L" Instrument
+ SG_ ThrottlePosition : 48|8@1+ (0.4,0) [0|100] "%" Instrument
 
-BO_ 2566846208 AMB: 8 Engine
+BO_ 2566845696 AMB: 8 Engine
  SG_ BarometricPressure : 0|8@1+ (0.5,0) [0|125] "kPa" Instrument
  SG_ CabInteriorTemperature : 8|16@1+ (0.03125,-273) [-273|1735] "degC" Instrument
  SG_ AmbientAirTemperature : 24|16@1+ (0.03125,-273) [-273|1735] "degC" Instrument
  SG_ EngineAirInletTemperature : 40|8@1+ (1,-40) [-40|210] "degC" Instrument
  SG_ RoadSurfaceTemperature : 48|16@1+ (0.03125,-273) [-273|1735] "degC" Instrument
 
-BO_ 2566850304 HOURS: 8 Engine
+BO_ 2566841600 HOURS: 8 Engine
  SG_ EngTotalHoursOfOperation : 0|32@1+ (0.05,0) [0|214748364.75] "h" Instrument
  SG_ EngTotalRevolutions : 32|32@1+ (1000,0) [0|4294967295000] "r" Instrument
 
-BO_ 2566852352 DD: 8 Engine
- SG_ FuelLevel1 : 8|8@1+ (0.4,0) [0|102] "%" Instrument
- SG_ WasherFluidLevel : 16|8@1+ (0.4,0) [0|102] "%" Instrument
- SG_ FuelFilterDifferentialPressure : 24|8@1+ (0.5,0) [0|125] "kPa" Instrument
- SG_ EngineOilFilterDifferentialPressure : 32|8@1+ (0.5,0) [0|125] "kPa" Instrument
- SG_ CargoAmbientTemperature : 40|16@1+ (0.03125,-273) [-273|1735] "degC" Instrument
+BO_ 2566847488 DD: 8 Engine
+ SG_ WasherFluidLevel : 0|8@1+ (0.4,0) [0|100] "%" Instrument
+ SG_ FuelLevel1 : 8|8@1+ (0.4,0) [0|100] "%" Instrument
+ SG_ FuelFilterDifferentialPressure : 16|8@1+ (2,0) [0|500] "kPa" Instrument
+ SG_ EngineOilFilterDifferentialPressure : 24|8@1+ (0.5,0) [0|125] "kPa" Instrument
+ SG_ CargoAmbientTemperature : 32|16@1+ (0.03125,-273) [-273|1735] "degC" Instrument
+ SG_ FuelLevel2 : 48|8@1+ (0.4,0) [0|100] "%" Instrument
 
-BO_ 2566854656 VD: 8 Engine
+BO_ 2566832384 VD: 8 Engine
  SG_ TotalVehicleDistance : 0|32@1+ (0.125,0) [0|536870911.875] "km" Instrument
  SG_ TripDistance : 32|32@1+ (0.125,0) [0|536870911.875] "km" Instrument
 
-BO_ 2365530112 DM1: 8 Engine
+BO_ 2566834688 DM1: 8 Engine
  SG_ ProtectLamp : 0|2@1+ (1,0) [0|3] "" Instrument
  SG_ AmberWarningLamp : 2|2@1+ (1,0) [0|3] "" Instrument
  SG_ RedStopLamp : 4|2@1+ (1,0) [0|3] "" Instrument
@@ -181,7 +186,7 @@ BO_ 2365530112 DM1: 8 Engine
  SG_ CM : 40|1@1+ (1,0) [0|1] "" DiagTool
  SG_ OccurrenceCount : 41|7@1+ (1,0) [0|127] "" DiagTool
 
-BO_ 2565865728 REQUEST: 3 DiagTool
+BO_ 2565472256 REQUEST: 3 DiagTool
  SG_ PGNRequested : 0|24@1+ (1,0) [0|16777215] "" Engine,Transmission,Brakes
 
 
@@ -192,30 +197,30 @@ CM_ BU_ Instrument "Instrument Cluster";
 CM_ BU_ DiagTool "Off-board Diagnostic Tool";
 
 CM_ BO_ 2364539904 "Electronic Engine Controller 1 - Primary engine control parameters";
-CM_ BO_ 2364540160 "Electronic Engine Controller 2 - Secondary engine control parameters";
-CM_ BO_ 2566841856 "Engine Temperature 1 - Engine temperature readings";
-CM_ BO_ 2566842112 "Engine Fluid Level/Pressure 1 - Oil/coolant/fuel pressures";
+CM_ BO_ 2364539648 "Electronic Engine Controller 2 - Secondary engine control parameters";
+CM_ BO_ 2566843904 "Engine Temperature 1 - Engine temperature readings";
+CM_ BO_ 2566844160 "Engine Fluid Level/Pressure 1 - Oil/coolant/fuel pressures";
 CM_ BO_ 2566844672 "Cruise Control/Vehicle Speed - Speed and cruise control status";
-CM_ BO_ 2566847232 "Inlet/Exhaust Conditions 1 - Turbo and intake parameters";
-CM_ BO_ 2566847488 "Vehicle Electrical Power 1 - Battery and charging info";
-CM_ BO_ 2566847744 "Transmission Fluids 1 - Transmission oil parameters";
-CM_ BO_ 2364540672 "Electronic Transmission Controller 1 - Shaft speeds and clutch";
-CM_ BO_ 2364540928 "Electronic Transmission Controller 2 - Gear selection";
-CM_ BO_ 2566843648 "Liquid Fuel Economy - Fuel consumption rates";
-CM_ BO_ 2566846208 "Ambient Conditions - Environmental temperatures/pressures";
-CM_ BO_ 2566850304 "Engine Hours, Revolutions - Engine total runtime";
-CM_ BO_ 2566852352 "Dash Display - Fuel level and filter status";
-CM_ BO_ 2566854656 "Vehicle Distance - Odometer and trip distance";
-CM_ BO_ 2365530112 "DM1 Active Diagnostic Trouble Codes";
-CM_ BO_ 2565865728 "PGN Request Message";
+CM_ BO_ 2566845952 "Inlet/Exhaust Conditions 1 - Turbo and intake parameters";
+CM_ BO_ 2566846208 "Vehicle Electrical Power 1 - Battery and charging info";
+CM_ BO_ 2566846464 "Transmission Fluids 1 - Transmission oil parameters";
+CM_ BO_ 2364539392 "Electronic Transmission Controller 1 - Shaft speeds and clutch";
+CM_ BO_ 2364540160 "Electronic Transmission Controller 2 - Gear selection";
+CM_ BO_ 2566844928 "Liquid Fuel Economy - Fuel consumption rates";
+CM_ BO_ 2566845696 "Ambient Conditions - Environmental temperatures/pressures";
+CM_ BO_ 2566841600 "Engine Hours, Revolutions - Engine total runtime";
+CM_ BO_ 2566847488 "Dash Display - Fuel level and filter status";
+CM_ BO_ 2566832384 "Vehicle Distance - Odometer and trip distance";
+CM_ BO_ 2566834688 "DM1 Active Diagnostic Trouble Codes";
+CM_ BO_ 2565472256 "PGN Request Message";
 
 CM_ SG_ 2364539904 EngineSpeed "Engine crankshaft speed - 0.125 RPM/bit";
 CM_ SG_ 2364539904 ActualEngPercentTorque "Current engine torque as percentage of reference torque";
-CM_ SG_ 2566841856 EngineCoolantTemperature "Temperature of engine coolant fluid";
-CM_ SG_ 2566847232 BoostPressure "Turbocharger boost pressure";
+CM_ SG_ 2566843904 EngineCoolantTemperature "Temperature of engine coolant fluid";
+CM_ SG_ 2566845952 BoostPressure "Turbocharger boost pressure";
 CM_ SG_ 2566844672 WheelBasedVehicleSpeed "Vehicle speed from wheel speed sensors";
-CM_ SG_ 2364540928 CurrentGear "Currently engaged transmission gear";
-CM_ SG_ 2566852352 FuelLevel1 "Primary fuel tank level percentage";
+CM_ SG_ 2364540160 CurrentGear "Currently engaged transmission gear";
+CM_ SG_ 2566847488 FuelLevel1 "Primary fuel tank level percentage";
 
 BA_DEF_ BO_  "GenMsgCycleTime" INT 0 10000;
 BA_DEF_  "BusType" STRING ;
@@ -226,20 +231,20 @@ BA_DEF_DEF_  "BusType" "";
 BA_ "BusType" "CAN";
 
 BA_ "GenMsgCycleTime" BO_ 2364539904 10;
-BA_ "GenMsgCycleTime" BO_ 2364540160 50;
-BA_ "GenMsgCycleTime" BO_ 2566841856 1000;
-BA_ "GenMsgCycleTime" BO_ 2566842112 500;
+BA_ "GenMsgCycleTime" BO_ 2364539648 50;
+BA_ "GenMsgCycleTime" BO_ 2566843904 1000;
+BA_ "GenMsgCycleTime" BO_ 2566844160 500;
 BA_ "GenMsgCycleTime" BO_ 2566844672 100;
-BA_ "GenMsgCycleTime" BO_ 2566847232 500;
-BA_ "GenMsgCycleTime" BO_ 2566847488 1000;
-BA_ "GenMsgCycleTime" BO_ 2566847744 1000;
-BA_ "GenMsgCycleTime" BO_ 2364540672 10;
-BA_ "GenMsgCycleTime" BO_ 2364540928 100;
-BA_ "GenMsgCycleTime" BO_ 2566843648 100;
+BA_ "GenMsgCycleTime" BO_ 2566845952 500;
 BA_ "GenMsgCycleTime" BO_ 2566846208 1000;
-BA_ "GenMsgCycleTime" BO_ 2566850304 1000;
-BA_ "GenMsgCycleTime" BO_ 2566852352 1000;
-BA_ "GenMsgCycleTime" BO_ 2566854656 1000;
+BA_ "GenMsgCycleTime" BO_ 2566846464 1000;
+BA_ "GenMsgCycleTime" BO_ 2364539392 10;
+BA_ "GenMsgCycleTime" BO_ 2364540160 100;
+BA_ "GenMsgCycleTime" BO_ 2566844928 100;
+BA_ "GenMsgCycleTime" BO_ 2566845696 1000;
+BA_ "GenMsgCycleTime" BO_ 2566841600 1000;
+BA_ "GenMsgCycleTime" BO_ 2566847488 1000;
+BA_ "GenMsgCycleTime" BO_ 2566832384 1000;
 
 VAL_ 2364539904 EngTorqueMode 
     0 "Low Idle Governor/No Request" 
@@ -294,12 +299,12 @@ VAL_ 2566844672 CruiseControlActive
     2 "Error" 
     3 "Not available" ;
 
-VAL_ 2365530112 ProtectLamp 0 "Off" 1 "On" 2 "Error" 3 "Not available" ;
-VAL_ 2365530112 AmberWarningLamp 0 "Off" 1 "On" 2 "Error" 3 "Not available" ;
-VAL_ 2365530112 RedStopLamp 0 "Off" 1 "On" 2 "Error" 3 "Not available" ;
-VAL_ 2365530112 MalfunctionIndicatorLamp 0 "Off" 1 "On" 2 "Error" 3 "Not available" ;
-VAL_ 2365530112 FlashProtectLamp 0 "Slow Flash" 1 "Fast Flash" 2 "Error" 3 "Not available" ;
-VAL_ 2365530112 FlashAmberWarningLamp 0 "Slow Flash" 1 "Fast Flash" 2 "Error" 3 "Not available" ;
-VAL_ 2365530112 FlashRedStopLamp 0 "Slow Flash" 1 "Fast Flash" 2 "Error" 3 "Not available" ;
-VAL_ 2365530112 FlashMalfunctionIndicatorLamp 0 "Slow Flash" 1 "Fast Flash" 2 "Error" 3 "Not available" ;
+VAL_ 2566834688 ProtectLamp 0 "Off" 1 "On" 2 "Error" 3 "Not available" ;
+VAL_ 2566834688 AmberWarningLamp 0 "Off" 1 "On" 2 "Error" 3 "Not available" ;
+VAL_ 2566834688 RedStopLamp 0 "Off" 1 "On" 2 "Error" 3 "Not available" ;
+VAL_ 2566834688 MalfunctionIndicatorLamp 0 "Off" 1 "On" 2 "Error" 3 "Not available" ;
+VAL_ 2566834688 FlashProtectLamp 0 "Slow Flash" 1 "Fast Flash" 2 "Error" 3 "Not available" ;
+VAL_ 2566834688 FlashAmberWarningLamp 0 "Slow Flash" 1 "Fast Flash" 2 "Error" 3 "Not available" ;
+VAL_ 2566834688 FlashRedStopLamp 0 "Slow Flash" 1 "Fast Flash" 2 "Error" 3 "Not available" ;
+VAL_ 2566834688 FlashMalfunctionIndicatorLamp 0 "Slow Flash" 1 "Fast Flash" 2 "Error" 3 "Not available" ;
 

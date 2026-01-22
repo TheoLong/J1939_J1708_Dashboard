@@ -1,0 +1,49 @@
+Timestamp,PGN,SPN,Value,Unit,Description
+; Decoded from truck_sample_generated.asc - validated against J1939-71
+; Note: Vehicle speed is at bytes 2-3 (1-indexed) = indices [1],[2] in 0-indexed
+; === HIGHWAY DRIVING SCENARIO ===
+0.000000,61444,190,2000.0,rpm,Engine Speed (0x3E80 * 0.125)
+0.000000,61444,513,0.0,%,Actual Engine Torque (0x7D - 125)
+0.010000,61444,190,2000.5,rpm,Engine Speed (0x3E84 * 0.125)
+0.020000,61444,190,2001.0,rpm,Engine Speed (0x3E88 * 0.125)
+0.030000,61444,190,2001.5,rpm,Engine Speed (0x3E8C * 0.125)
+0.040000,61444,190,2002.0,rpm,Engine Speed (0x3E90 * 0.125)
+0.050000,61443,91,50.0,%,Accelerator Pedal Position (0x7D * 0.4)
+0.050000,61443,92,100.0,%,Engine Load (0x64 * 1.0)
+0.100000,65262,110,100.0,degC,Coolant Temp (0x8C - 40)
+0.200000,65263,100,500.0,kPa,Oil Pressure (0x7D * 4)
+0.300000,65265,84,80.0,km/h,Vehicle Speed (0x5000 / 256)
+0.400000,65270,102,200.0,kPa,Boost Pressure (0x64 * 2)
+0.500000,65271,168,12.8,V,Battery Voltage (0x0100 * 0.05)
+0.600000,61445,523,8,,Current Gear (0x85 - 125)
+0.700000,65253,247,50000.0,hr,Engine Hours (0x000F4240 * 0.05)
+0.900000,65276,96,50.0,%,Fuel Level (0x7D * 0.4)
+; === REPEAT CYCLE ===
+1.000000,61444,190,2000.0,rpm,Engine Speed
+1.100000,65262,110,102.0,degC,Coolant Temp (0x8E - 40)
+1.300000,65265,84,81.0,km/h,Vehicle Speed (0x5100 / 256)
+1.500000,65271,168,13.0,V,Battery Voltage (0x0104 * 0.05)
+; === ACCELERATION SCENARIO ===
+2.000000,61444,190,2400.0,rpm,Engine Speed (0x4B00 * 0.125)
+2.000000,61444,513,25.0,%,Actual Engine Torque (0x96 - 125)
+2.100000,65262,110,104.0,degC,Coolant Temp (0x90 - 40)
+2.300000,65265,84,95.0,km/h,Vehicle Speed (0x5F00 / 256)
+2.600000,61445,523,9,,Current Gear (0x86 - 125)
+; === CRUISE SCENARIO ===
+3.000000,61444,190,2560.0,rpm,Engine Speed (0x5000 * 0.125)
+3.100000,65262,110,100.0,degC,Coolant Temp
+3.300000,65265,84,100.0,km/h,Vehicle Speed (0x6400 / 256)
+3.600000,61445,523,10,,Current Gear (0x87 - 125)
+; === DIAGNOSTIC MESSAGE TEST ===
+4.000000,65226,190,FMI_0,,DM1: SPN 190 FMI 0 - Data Above Normal Range
+4.100000,65226,110,FMI_2,,DM1: SPN 110 FMI 2 - Data Erratic
+; === IDLE SCENARIO ===
+7.000000,61444,190,600.0,rpm,Engine Speed (0x12C0 * 0.125)
+7.000000,61444,513,-45.0,%,Actual Engine Torque (0x50 - 125)
+7.100000,65262,110,80.0,degC,Coolant Temp (0x78 - 40)
+7.300000,65265,84,0.0,km/h,Vehicle Speed (stopped)
+7.600000,61445,523,0,,Current Gear (Neutral: 0x7D - 125)
+; === ENGINE OFF ===
+8.000000,61444,190,0.0,rpm,Engine Speed (engine off)
+8.100000,65262,110,60.0,degC,Coolant Temp (0x64 - 40)
+8.500000,65271,168,12.0,V,Battery Voltage (key off: 0x00F0 * 0.05)

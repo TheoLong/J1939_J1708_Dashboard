@@ -34,15 +34,15 @@ All specifications and reference materials are in the [Docs](./Docs/) folder:
 | [PROJECT_SPECIFICATION.md](./Docs/PROJECT_SPECIFICATION.md) | Complete engineering specification with phases |
 | [HARDWARE_REFERENCE.md](./Docs/HARDWARE_REFERENCE.md) | Detailed hardware wiring and pinouts |
 | [J1939_PGN_CATALOG.md](./Docs/J1939_PGN_CATALOG.md) | J1939 PGN/SPN parameter reference |
-| [Original PDF](./Docs/Custom%20Truck%20Data%20Logging%20%26%20Display%20Project.pdf) | Original project requirements document |
 
 ## 🚀 Implementation Phases
 
 ### Phase 0: Pre-Hardware Preparation *(Current)*
 - [x] Create project specification
-- [x] Document hardware requirements
+- [x] Document hardware requirements  
 - [x] Create J1939/J1708 protocol references
-- [ ] Set up development environment
+- [x] Create firmware header files with PGN/SPN definitions
+- [ ] Set up development environment (PlatformIO)
 - [ ] Create simulation framework
 - [ ] Implement parser unit tests
 

@@ -200,11 +200,11 @@ Gauge Boost = 100 kPa - 101.325 kPa ≈ -1.3 kPa (or add barometric for actual)
 | 1 | 560 | Transmission Driveline Engaged | 2 | - | - | - | 0-3 |
 | 1 | 573 | Torque Converter Lockup Engaged | 2 | - | - | - | 0-3 |
 | 1 | 574 | Transmission Shift In Process | 2 | - | - | - | 0-3 |
-| 2 | 191 | Transmission Output Shaft Speed | 16 | 0.125 | 0 | rpm | 0-8031.875 |
+| 2-3 | 191 | Transmission Output Shaft Speed | 16 | 0.125 | 0 | rpm | 0-8031.875 |
 | 4 | 522 | Percent Clutch Slip | 8 | 0.4 | 0 | % | 0-100 |
 | 5 | 606 | Engine Momentary Overspeed Enable | 2 | - | - | - | 0-3 |
 | 5 | 607 | Progressive Shift Disable | 2 | - | - | - | 0-3 |
-| 6 | 161 | Transmission Input Shaft Speed | 16 | 0.125 | 0 | rpm | 0-8031.875 |
+| 6-7 | 161 | Transmission Input Shaft Speed | 16 | 0.125 | 0 | rpm | 0-8031.875 |
 
 ### 3.2 PGN 61445 (0xF005) - ETC2 - Electronic Transmission Controller 2
 

@@ -146,9 +146,8 @@ extern "C" {
 #define SPN_CURRENT_GEAR                    523   // 0x20B - Current Gear
 #define SPN_SELECTED_GEAR                   524   // 0x20C - Selected Gear
 #define SPN_GEAR_RATIO                      526   // 0x20E - Actual Gear Ratio
-#define SPN_TRANS_OIL_TEMP                  177   // 0xB1 - Transmission Oil Temperature (TRF1 byte 4, pressure)
-#define SPN_TRANS_OIL_TEMP_EXT              178   // 0xB2 - Transmission Oil Temperature Extended (TRF1 bytes 5-6)
-#define SPN_TRANS_OIL_PRESSURE              177   // 0xB1 - Transmission Oil Pressure (TRF1 byte 4)
+#define SPN_TRANS_OIL_PRESSURE              177   // 0xB1 - Transmission Oil Pressure (TRF1 byte 4, 16 kPa/bit)
+#define SPN_TRANS_OIL_TEMP                  178   // 0xB2 - Transmission Oil Temperature (TRF1 bytes 5-6, 0.03125°C/bit, offset -273)
 #define SPN_TRANS_OIL_LEVEL                 126   // 0x7E - Transmission Oil Level
 #define SPN_TRANS_FILTER_DIFF_PRESS         127   // 0x7F - Transmission Filter Differential Pressure
 #define SPN_TRANS_CLUTCH_PRESSURE           124   // 0x7C - Transmission Clutch Pressure
@@ -420,15 +419,22 @@ typedef enum {
  * @brief Extract PGN from 29-bit CAN ID
  * @param can_id 29-bit extended CAN identifier
  * @return 18-bit PGN value
+ * 
+ * CAN ID structure: Priority(3) | R(1) | DP(1) | PF(8) | PS(8) | SA(8)
+ * For PDU1 (PF < 240): PS is destination address, not part of PGN
+ * For PDU2 (PF >= 240): PS is group extension, included in PGN
  */
 static inline uint32_t j1939_get_pgn(uint32_t can_id) {
     uint8_t pdu_format = (can_id >> 16) & 0xFF;
+    uint8_t dp = (can_id >> 24) & 0x03;  // Data Page + Reserved bits
+    
     if (pdu_format < 240) {
-        // PDU1: PGN does not include destination address
-        return (can_id >> 8) & 0x3FF00;
+        // PDU1: PGN = DP(2 bits) + PF(8 bits) + 0x00 (PS is destination, not PGN)
+        return ((uint32_t)dp << 16) | ((uint32_t)pdu_format << 8);
     } else {
-        // PDU2: PGN includes group extension
-        return (can_id >> 8) & 0x3FFFF;
+        // PDU2: PGN = DP(2 bits) + PF(8 bits) + PS(8 bits)
+        uint8_t pdu_specific = (can_id >> 8) & 0xFF;
+        return ((uint32_t)dp << 16) | ((uint32_t)pdu_format << 8) | pdu_specific;
     }
 }
 

@@ -320,7 +320,8 @@ This project aims to build a **secondary digital dashboard** for a heavy-duty tr
 | 65266 (0xFEF2) | LFE - Fuel Economy | 100 ms | Fuel Rate (183) |
 | 65269 (0xFEF5) | AMB - Ambient Conditions | 1000 ms | Ambient Temp (171) |
 | 65270 (0xFEF6) | IC1 - Intake/Exhaust Conditions 1 | 500 ms | Boost Pressure (102) |
-| 65272 (0xFEF8) | TCO1 - Transmission Config. 1 | 100 ms | Current Gear (523) |
+| 61445 (0xF005) | ETC2 - Electronic Transmission Controller 2 | 100 ms | Current Gear (523), Selected Gear (524) |
+| 65272 (0xFEF8) | TRF1 - Transmission Fluids 1 | 1000 ms | Trans Oil Temp (178), Pressure (177) |
 | 65226 (0xFECA) | DM1 - Active Diagnostic Trouble Codes | 1000 ms | DTCs |
 | 65227 (0xFECB) | DM2 - Previously Active DTCs | On-request | DTCs |
 
@@ -334,6 +335,20 @@ For messages > 8 bytes (e.g., DM1 with multiple DTCs):
 | TP.DT | 60160 (0xEB00) | Transport Protocol Data Transfer |
 | RTS | 60416 | Request to Send (peer-to-peer) |
 | CTS | 60416 | Clear to Send (peer-to-peer) |
+
+#### 5.1.5 Allison Transmission Proprietary PGNs
+
+For Allison 1000/3000/4000 series transmissions (common in target vehicles), expect these additional messages:
+
+| PGN | Name | Notes |
+|-----|------|-------|
+| 61445 (0xF005) | ETC2 | Standard - Current/Selected Gear |
+| 61442 (0xF002) | ETC1 | Standard - Output Shaft Speed, Lockup |
+| 65272 (0xFEF8) | TRF1 | Standard - Trans Oil Temp/Pressure |
+| 61184 (0xEF00) | Proprietary A | Allison-specific - check Allison ATSG docs |
+| 65280-65535 | Proprietary B | May contain Allison diagnostic data |
+
+**Note:** Allison proprietary PGNs vary by transmission model and software version. Log unknown PGNs from source address 0x03 (transmission) for analysis.
 
 ### 5.2 SAE J1708/J1587 Protocol
 
@@ -379,6 +394,13 @@ For messages > 8 bytes (e.g., DM1 with multiple DTCs):
 | 65 | Wheel Speed | Variable |
 | 84 | Road Speed | 2 bytes |
 | 194 | Fault Codes | Variable |
+
+> **Important Note on J1587 PIDs vs J1939 SPNs:**
+> While J1587 PIDs and J1939 SPNs share some common numbers (e.g., both use 190 for Engine Speed), they are **distinct namespaces** with different parameter definitions. For example:
+> - J1587 PID 177 = Transmission Oil Temperature
+> - J1939 SPN 177 = Transmission Oil Pressure
+> 
+> Always verify which protocol you're working with before decoding parameters. The firmware header files include comments distinguishing J1587 PIDs from J1939 SPNs.
 
 ---
 
@@ -509,6 +531,50 @@ uint32_t can_get_error_count();
 - Decode SPNs with scaling and offset
 - Manage DTC parsing from DM1/DM2
 
+**PGN Extraction Function (PDU1 vs PDU2 Handling):**
+
+Critical: The PGN extraction must handle PDU1 (PF < 240) and PDU2 (PF ≥ 240) formats differently:
+
+```cpp
+/**
+ * @brief Extract 18-bit PGN from 29-bit J1939 CAN identifier
+ * @param can_id 29-bit extended CAN identifier
+ * @return 18-bit Parameter Group Number (PGN)
+ * 
+ * PDU1 (PF < 240): PS field is Destination Address, NOT part of PGN
+ * PDU2 (PF >= 240): PS field is Group Extension, IS part of PGN
+ */
+uint32_t j1939_extract_pgn(uint32_t can_id) {
+    uint8_t pf = (can_id >> 16) & 0xFF;  // PDU Format (bits 16-23)
+    uint8_t ps = (can_id >> 8) & 0xFF;   // PDU Specific (bits 8-15)
+    uint8_t dp = (can_id >> 24) & 0x03;  // Data Page + Reserved (bits 24-25)
+    
+    if (pf >= 240) {
+        // PDU2: Broadcast - PS is Group Extension (part of PGN)
+        return ((uint32_t)dp << 16) | ((uint32_t)pf << 8) | ps;
+    } else {
+        // PDU1: Peer-to-peer - PS is Destination Address (NOT part of PGN)
+        return ((uint32_t)dp << 16) | ((uint32_t)pf << 8);
+    }
+}
+
+uint8_t j1939_extract_source_address(uint32_t can_id) {
+    return can_id & 0xFF;  // Source Address (bits 0-7)
+}
+
+uint8_t j1939_extract_priority(uint32_t can_id) {
+    return (can_id >> 26) & 0x07;  // Priority (bits 26-28)
+}
+
+uint8_t j1939_extract_destination_address(uint32_t can_id) {
+    uint8_t pf = (can_id >> 16) & 0xFF;
+    if (pf < 240) {
+        return (can_id >> 8) & 0xFF;  // PDU1: PS is destination
+    }
+    return 0xFF;  // PDU2: Global/broadcast (no specific destination)
+}
+```
+
 **Key Data Structures:**
 ```cpp
 typedef struct {
@@ -532,6 +598,140 @@ typedef struct {
     const char* name;
     const char* unit;
 } j1939_parameter_t;
+```
+
+#### 6.3.2.1 Transport Protocol (BAM) Reassembly
+
+For multi-packet messages (DM1 with multiple DTCs, Component ID, etc.), implement the Broadcast Announce Message (BAM) reassembly state machine:
+
+**BAM State Machine:**
+```cpp
+typedef enum {
+    TP_STATE_IDLE,           // No transfer in progress
+    TP_STATE_RECEIVING,      // Receiving TP.DT packets
+    TP_STATE_COMPLETE,       // All packets received
+    TP_STATE_ERROR           // Timeout or sequence error
+} tp_state_t;
+
+typedef struct {
+    tp_state_t state;
+    uint32_t target_pgn;           // PGN being reassembled
+    uint8_t source_address;        // Source of multi-packet message
+    uint16_t total_size;           // Expected total bytes
+    uint8_t total_packets;         // Expected packet count
+    uint8_t received_packets;      // Packets received so far
+    uint8_t buffer[1785];          // Max TP payload (255 packets × 7 bytes)
+    uint32_t last_packet_time_ms;  // For timeout detection
+} tp_session_t;
+
+// Timeout per SAE J1939-21:
+// - BAM mode (broadcast): 750ms between TP.DT packets
+// - RTS/CTS mode: T1=750ms (RTS→CTS), T2=1250ms (CTS→TP.DT), T3=1250ms (between TP.DT)
+// This project primarily uses BAM mode for receiving broadcast messages like DM1
+#define TP_TIMEOUT_MS  750
+
+/**
+ * @brief Handle incoming CAN frame for Transport Protocol
+ * @param frame Received CAN frame
+ * @param session TP session state
+ * @return true if a complete message is now available
+ */
+bool tp_handle_frame(const twai_message_t* frame, tp_session_t* session) {
+    uint32_t pgn = j1939_get_pgn(frame->identifier);
+    
+    if (pgn == PGN_TP_CM) {  // 60416 - Connection Management
+        uint8_t ctrl_byte = frame->data[0];
+        
+        if (ctrl_byte == 32) {  // BAM (Broadcast Announce Message)
+            // Start new session
+            session->total_size = frame->data[1] | (frame->data[2] << 8);
+            session->total_packets = frame->data[3];
+            session->target_pgn = frame->data[5] | (frame->data[6] << 8) | (frame->data[7] << 16);
+            session->source_address = j1939_get_source_address(frame->identifier);
+            session->received_packets = 0;
+            session->state = TP_STATE_RECEIVING;
+            session->last_packet_time_ms = millis();
+            return false;
+        }
+    }
+    else if (pgn == PGN_TP_DT) {  // 60160 - Data Transfer
+        if (session->state != TP_STATE_RECEIVING) return false;
+        
+        // Check for timeout
+        if ((millis() - session->last_packet_time_ms) > TP_TIMEOUT_MS) {
+            session->state = TP_STATE_ERROR;
+            return false;
+        }
+        
+        uint8_t seq_num = frame->data[0];  // 1-based sequence number
+        
+        // Validate sequence (should be next expected packet)
+        if (seq_num != session->received_packets + 1) {
+            session->state = TP_STATE_ERROR;
+            return false;
+        }
+        
+        // Copy 7 data bytes to buffer
+        uint16_t offset = (seq_num - 1) * 7;
+        for (int i = 0; i < 7 && (offset + i) < session->total_size; i++) {
+            session->buffer[offset + i] = frame->data[1 + i];
+        }
+        
+        session->received_packets++;
+        session->last_packet_time_ms = millis();
+        
+        // Check if complete
+        if (session->received_packets >= session->total_packets) {
+            session->state = TP_STATE_COMPLETE;
+            return true;  // Complete message available
+        }
+    }
+    
+    return false;
+}
+```
+
+**DM1 Multi-DTC Parsing:**
+```cpp
+/**
+ * @brief Parse DM1 payload for multiple DTCs
+ * @param data TP reassembled buffer
+ * @param len Data length
+ * @param dtcs Output array for parsed DTCs
+ * @param max_dtcs Maximum DTCs to parse
+ * @return Number of DTCs parsed
+ */
+uint8_t parse_dm1_dtcs(const uint8_t* data, uint16_t len, j1939_dtc_t* dtcs, uint8_t max_dtcs) {
+    if (len < 2) return 0;
+    
+    // Bytes 0-1: Lamp status (skip for DTC extraction)
+    uint8_t dtc_count = 0;
+    uint16_t offset = 2;  // Start after lamp bytes
+    
+    // Each DTC is 4 bytes
+    while (offset + 4 <= len && dtc_count < max_dtcs) {
+        // Bytes 0-1: SPN bits 0-15
+        // Byte 2: SPN bits 16-18 (bits 5-7), FMI (bits 0-4)
+        // Byte 3: Occurrence Count (bits 0-6), CM (bit 7)
+        
+        uint32_t spn = data[offset] | (data[offset + 1] << 8) | 
+                       ((data[offset + 2] & 0xE0) << 11);
+        uint8_t fmi = data[offset + 2] & 0x1F;
+        uint8_t oc = data[offset + 3] & 0x7F;
+        
+        // Skip "no fault" indicator (SPN=0, FMI=0, OC=0)
+        if (spn != 0 || fmi != 0) {
+            dtcs[dtc_count].spn = spn;
+            dtcs[dtc_count].fmi = fmi;
+            dtcs[dtc_count].oc = oc;
+            dtc_count++;
+        }
+        
+        offset += 4;
+    }
+    
+    return dtc_count;
+}
 ```
 
 #### 6.3.3 J1708/J1587 Driver Module
@@ -758,7 +958,82 @@ nvs_partition "nvs"
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 6.5 Libraries & Dependencies
+### 6.5 Watchdog Timer Configuration
+
+For 8+ hour stability requirement, implement hardware and task watchdogs:
+
+**Hardware Watchdog (IWDT):**
+```cpp
+#include "esp_system.h"
+#include "esp_task_wdt.h"
+
+// Watchdog timeout in seconds (reset if not fed)
+#define WDT_TIMEOUT_SEC  10
+
+void setup_watchdog() {
+    // Configure Task Watchdog Timer (TWDT)
+    esp_task_wdt_config_t wdt_config = {
+        .timeout_ms = WDT_TIMEOUT_SEC * 1000,
+        .idle_core_mask = 0,           // Don't watch idle tasks
+        .trigger_panic = true          // Reboot on timeout
+    };
+    esp_task_wdt_reconfigure(&wdt_config);
+    
+    // Subscribe critical tasks to watchdog
+    esp_task_wdt_add(xTaskGetHandle("CAN_Task"));
+    esp_task_wdt_add(xTaskGetHandle("J1708_Task"));
+}
+
+// Call from each subscribed task's main loop
+void feed_watchdog() {
+    esp_task_wdt_reset();
+}
+```
+
+**Task Health Monitor:**
+```cpp
+typedef struct {
+    uint32_t last_heartbeat_ms;
+    const char* task_name;
+    bool healthy;
+} task_health_t;
+
+task_health_t task_health[] = {
+    {0, "CAN_Task", true},
+    {0, "J1708_Task", true},
+    {0, "Display_Task", true},
+};
+
+// Called periodically from each task
+void task_heartbeat(uint8_t task_id) {
+    task_health[task_id].last_heartbeat_ms = millis();
+    task_health[task_id].healthy = true;
+    esp_task_wdt_reset();  // Feed watchdog
+}
+
+// Monitor task - runs at low priority
+void health_monitor_task(void* param) {
+    while (1) {
+        uint32_t now = millis();
+        for (int i = 0; i < sizeof(task_health)/sizeof(task_health_t); i++) {
+            if ((now - task_health[i].last_heartbeat_ms) > 5000) {
+                task_health[i].healthy = false;
+                // Log error, attempt recovery
+                ESP_LOGE("HEALTH", "Task %s unresponsive", task_health[i].task_name);
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+```
+
+**Recovery Strategy:**
+1. **Soft recovery**: If task unresponsive, attempt to restart just that task
+2. **Hard recovery**: If multiple tasks fail, trigger software reset
+3. **Persistent logging**: Store crash reason in NVS before reboot
+4. **Boot count tracking**: Detect repeated crashes and enter safe mode
+
+### 6.6 Libraries & Dependencies
 
 | Library | Purpose | License |
 |---------|---------|---------|
@@ -799,7 +1074,7 @@ nvs_partition "nvs"
 | GPIO 23 | SPI_MOSI | TFT Display | VSPI Data |
 | GPIO 19 | SPI_MISO | TFT Display | VSPI Data In |
 | GPIO 15 | TFT_CS | TFT Display | Chip Select |
-| GPIO 2 | TFT_DC | TFT Display | Data/Command |
+| GPIO 22 | TFT_DC | TFT Display | Data/Command (avoid GPIO 2 - boot strapping) |
 | GPIO 21 | TFT_RST | TFT Display | Reset |
 | **1-Wire (Phase 4)** ||||
 | GPIO 27 | OneWire_Data | DS18B20 | With 4.7kΩ pull-up |
@@ -949,22 +1224,24 @@ const test_frame_t cummins_test_frames[] = {
     { 0x18FEEF00, {0x64, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, 8, 1000 }, // 400 kPa
     
     // PGN 65270 (IC1) - Intake Manifold Pressure/Temp
-    { 0x18FEF600, {0xFF, 0x96, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, 8, 500 },  // 150 kPa
+    { 0x18FEF600, {0xFF, 0x4B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, 8, 500 },  // 150 kPa boost (0x4B=75, 75×2=150)
     
     // PGN 61443 (EEC2) - Accelerator Pedal Position
     { 0x0CF00300, {0x00, 0xFF, 0x64, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, 8, 50 },   // 40% pedal
     
     // PGN 65265 (CCVS) - Vehicle Speed
-    { 0x18FEF100, {0xFF, 0xFF, 0x80, 0x68, 0x13, 0x00, 0x00, 0xFF}, 8, 100 },  // 104.9 km/h
+    // Speed at bytes 2-3 (1-indexed) = indices [1],[2], little-endian
+    // 104.96 km/h = 26870 = 0x68F6, at [1],[2] = 0xF6, 0x68
+    { 0x18FEF100, {0xFF, 0xF6, 0x68, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, 8, 100 },  // ~105 km/h
     
     // PGN 65276 (DASH) - Fuel Level
     { 0x18FEFC00, {0xFF, 0x64, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, 8, 1000 }, // 40% fuel
     
     // PGN 65253 (HOURS) - Engine Hours
-    { 0x18FEE500, {0xC0, 0xA8, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF}, 8, 10000 }, // 10800 hours
+    { 0x18FEE500, {0xC0, 0x4B, 0x03, 0x00, 0xFF, 0xFF, 0xFF, 0xFF}, 8, 10000 }, // 10800 hours (0x00034BC0=216000, ×0.05=10800)
     
     // PGN 65266 (LFE) - Fuel Economy (Fuel Rate)
-    { 0x18FEF200, {0x64, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, 8, 100 },   // 50 L/h
+    { 0x18FEF200, {0xE8, 0x03, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, 8, 100 },   // 50 L/h (0x03E8=1000, ×0.05=50)
 };
 ```
 
@@ -1058,10 +1335,10 @@ class J1939TestDataGenerator:
         """Create Cruise Control/Vehicle Speed"""
         speed_raw = int(self.current_state['vehicle_speed_kmh'] / 0.00390625)
         return struct.pack('<BBBBBBBB',
-            0xFF, 0xFF,
-            speed_raw & 0xFF,
-            (speed_raw >> 8) & 0xFF,
-            0x00, 0x00, 0x00, 0xFF
+            0xFF,                           # Byte 1: switches
+            speed_raw & 0xFF,               # Byte 2: speed low byte
+            (speed_raw >> 8) & 0xFF,        # Byte 3: speed high byte
+            0x00, 0x00, 0x00, 0x00, 0xFF    # Bytes 4-8
         )
     
     def can_id_from_pgn(self, pgn: int, sa: int = 0x00, priority: int = 6) -> int:
@@ -1675,8 +1952,8 @@ void onJ1939DataReceived(uint32_t pgn, const j1939_data_t& data) {
 | 3 | Engine Oil Pressure | 65263/100 | Linear Bar | High | 2 Hz |
 | 4 | Fuel Level | 65276/96 | Linear Bar | Medium | 0.2 Hz |
 | 5 | Boost Pressure | 65270/102 | Circular Gauge | Medium | 5 Hz |
-| 6 | Transmission Oil Temp | 65272/177 | Linear Bar | Medium | 1 Hz |
-| 7 | Current Gear | 65272/523 | Numeric | High | 10 Hz |
+| 6 | Transmission Oil Temp | 65272/178 | Linear Bar | Medium | 1 Hz |
+| 7 | Current Gear | 61445/523 | Numeric | High | 10 Hz |
 | 8 | Trip MPG | Computed | Numeric | Info | 1 Hz |
 | 9 | Instant MPG | Computed | Numeric | Info | 2 Hz |
 | 10 | Trip Distance | Stored | Numeric | Info | 1 Hz |
@@ -1744,7 +2021,7 @@ void onJ1939DataReceived(uint32_t pgn, const j1939_data_t& data) {
   - [ ] PGN 65270 (IC1) - Boost Pressure
   - [ ] PGN 65276 (DASH) - Fuel Level
   - [ ] PGN 65253 (HOURS) - Engine Hours
-  - [ ] PGN 65203 (LFE) - Fuel Rate
+  - [ ] PGN 65266 (LFE) - Fuel Rate
   - [ ] PGN 65226 (DM1) - Active Fault Codes
 - [ ] Implement Transport Protocol (BAM) reassembly
 - [ ] Handle special values (0xFF = N/A, 0xFE = Error)
@@ -2065,10 +2342,11 @@ Implement the parameter selection system from Section 7.6:
 
 | Parameter | SPN | PGN | Scale | Offset | Unit | Range |
 |-----------|-----|-----|-------|--------|------|-------|
-| Current Gear | 523 | 65272 | 1 | -125 | gear | -125 to 125 |
-| Selected Gear | 524 | 65272 | 1 | -125 | gear | -125 to 125 |
-| Torque Converter Lockup | 573 | 65272 | - | - | bit | 0/1 |
-| Trans Oil Temperature | 177 | 65272 | 1 | -40 | °C | -40 to 210 |
+| Current Gear | 523 | 61445 | 1 | -125 | gear | -125 to 125 |
+| Selected Gear | 524 | 61445 | 1 | -125 | gear | -125 to 125 |
+| Torque Converter Lockup | 573 | 61442 | - | - | bit | 0/1 |
+| Trans Oil Temperature | 178 | 65272 | 0.03125 | -273 | °C | -273 to 1735 |
+| Trans Oil Pressure | 177 | 65272 | 16 | 0 | kPa | 0-4000 |
 | Output Shaft Speed | 191 | 61442 | 0.125 | 0 | RPM | 0-8031.875 |
 
 ### 9.3 Vehicle Parameters (J1939)
@@ -2167,7 +2445,7 @@ float mpg_to_l100km(float mpg) {
 }
 
 // Calculate instantaneous MPG from J1939 fuel rate
-// PGN 65203 (LFE) fuel_rate in L/h, speed in km/h
+// PGN 65266 (LFE) fuel_rate in L/h, speed in km/h
 float calc_instant_mpg(float fuel_rate_L_h, float speed_km_h) {
     if (fuel_rate_L_h < 0.1f) return 0.0f;  // Avoid divide by zero
     float l_per_100km = (fuel_rate_L_h * 100.0f) / speed_km_h;
@@ -2435,9 +2713,8 @@ mqtt:
 
 ### 14.4 Project Files
 
-- [Custom Truck Data Logging & Display Project.pdf](./Custom%20Truck%20Data%20Logging%20%26%20Display%20Project.pdf) - Original project document
-- [HARDWARE_REFERENCE.md](./HARDWARE_REFERENCE.md) - Detailed hardware specifications (to be created)
-- [J1939_PGN_CATALOG.md](./J1939_PGN_CATALOG.md) - Complete PGN/SPN reference (to be created)
+- [HARDWARE_REFERENCE.md](./HARDWARE_REFERENCE.md) - Detailed hardware specifications
+- [J1939_PGN_CATALOG.md](./J1939_PGN_CATALOG.md) - Complete PGN/SPN reference
 
 ---
 
@@ -2634,6 +2911,7 @@ void log_to_udp(const char* msg) {
 |---------|------|--------|---------|
 | 1.0 | 2026-01-22 | AI Assistant | Initial specification |
 | 2.0 | 2026-01-22 | AI Assistant | Added test-driven Phase 0, watch list manager, test data sources, risk assessment, resource budgets, enhanced troubleshooting, debug strategy |
+| 2.1 | 2026-01-22 | AI Assistant | **Critical fixes:** Corrected PGN extraction function (PDU1/PDU2 handling), fixed Current Gear PGN (61445 not 65272), fixed transmission SPNs (177=pressure, 178=temp), corrected Fuel Economy PGN (65266 not 65203), resolved GPIO 2 boot conflict (use GPIO 22 for TFT_DC), fixed J1587 MID definitions, added TP/BAM reassembly algorithm, added watchdog implementation, added Allison proprietary PGN notes, regenerated test data with verified encoding |
 
 ---
 

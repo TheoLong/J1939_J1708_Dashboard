@@ -104,11 +104,11 @@ typedef enum {
 typedef enum {
     SPN_TRANSMISSION_INPUT_SHAFT_SPEED                  = 0xA1,   // 161
     SPN_TRANSMISSION_OUTPUT_SHAFT_SPEED                 = 0xBF,   // 191
-    SPN_TRANSMISSION_CURRENT_GEAR                       = 0xA7,   // 167
-    SPN_TRANSMISSION_SELECTED_GEAR                      = 0xA4,   // 164
-    SPN_TRANSMISSION_ACTUAL_GEAR_RATIO                  = 0x245,  // 581
-    SPN_TRANSMISSION_OIL_TEMPERATURE                    = 0xB1,   // 177
-    SPN_TRANSMISSION_OIL_PRESSURE                       = 0xB2,   // 178
+    SPN_TRANSMISSION_CURRENT_GEAR                       = 0x20B,  // 523 (was incorrectly 167)
+    SPN_TRANSMISSION_SELECTED_GEAR                      = 0x20C,  // 524 (was incorrectly 164)
+    SPN_TRANSMISSION_ACTUAL_GEAR_RATIO                  = 0x20E,  // 526 (corrected from 581)
+    SPN_TRANSMISSION_OIL_PRESSURE                       = 0xB1,   // 177 - TRF1 byte 4, scale 16 kPa/bit
+    SPN_TRANSMISSION_OIL_TEMPERATURE                    = 0xB2,   // 178 - TRF1 bytes 5-6, scale 0.03125°C, offset -273
     SPN_TRANSMISSION_OIL_LEVEL                          = 0x7C,   // 124
     SPN_PERCENT_CLUTCH_SLIP                             = 0x208,  // 520
     SPN_TRANSMISSION_DRIVELINE_ENGAGED                  = 0x230,  // 560

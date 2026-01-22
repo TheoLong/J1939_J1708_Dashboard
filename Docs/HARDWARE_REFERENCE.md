@@ -126,9 +126,10 @@ The ESP32 includes a built-in CAN controller called TWAI (Two-Wire Automotive In
 | SPI_MOSI | 23 | VSPI_MOSI |
 | SPI_MISO | 19 | VSPI_MISO |
 | TFT_CS | 15 | Display chip select |
-| TFT_DC | 2 | Data/Command |
+| TFT_DC | 22 | Data/Command (GPIO 2 avoided - boot strapping) |
+| TFT_RST | 21 | Display reset |
 | **Status** |||
-| LED | 2 | Built-in LED (shared with TFT_DC) |
+| LED | 2 | Built-in LED (boot strapping pin - use carefully) |
 | **Future** |||
 | 1-Wire | 27 | Temperature sensors |
 | TC_CS | 14 | Thermocouple chip select |
